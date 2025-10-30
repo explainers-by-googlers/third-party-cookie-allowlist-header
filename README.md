@@ -156,3 +156,26 @@ Ensuring this setting does not block access to [CHIPS](https://privacysandbox.go
 ## UX Considerations
 
 In existing browser surfaces concerned with whether third-party cookies are allowed or blocked for a given tab (such as developer tools or site settings), third-party cookie access blocking due to this header should be reflected to assist with user understanding and developer debugging.
+
+## Future Work
+
+### Well-Known File
+
+The list of origins needing to be granted access could be extensive for some websites, and although we hope the wildcard matching on subdomains can help curtail the list, it might become cumbersome to transmit the list in a header on every navigation.
+It may make sense to support some sort of [well-known location](https://en.wikipedia.org/wiki/Well-known_URI) that has the allowlist so it can be fetched/cached independently.
+For the moment we leave this to future work, as it seems a natural extension of the header (for example, a new token like `well-known` could be included in the allowlist to indicate that the browser should fetch additional entries from there).
+
+### API Endpoint
+
+Instead of checking a [well-known location](https://en.wikipedia.org/wiki/Well-known_URI) for allowlists or to check individual origins, we could provide a way to point a site to some endpoint (such as a [REST API](https://en.wikipedia.org/wiki/REST) that took the origin in question as a query parameter) which could provide the needed information. The downside is that more requests might be required here (if all needed information cannot be provided in a single go).
+
+### HTML Tag
+
+Instead of (or in addition to) an HTTP response header, we could allow an [http-equiv](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/meta/http-equiv) meta tag to set the third-party cookie allowlist.
+In order to prevent this from counting as a mid-lifecycle change, we could restrict the tag to only be respected if it was present in the page before JavaScript started to execute and fetches started to be performed.
+This would ensure the tag originated from the server and wasn’t injected by a third-party script in an attempt to weaken controls.
+
+### Additional Controls
+
+There may be top-level site privacy settings beyond third-party cookies (such as even  blocking access to partitioned storage in third-party contexts) that could use a model similar to an allowlist header to provide better guarantees for user privacy.
+We did not design the proposed header as a generic control, as every surface is likely to have unique constraints that might not play well together in a shared header with multiple features (similar to the reason we did not extend the [Permissions Policy Header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Permissions_Policy)).
