@@ -19,7 +19,6 @@ Although third-party cookies are not the only storage vector for such cases, the
 * When this allowlist is provided, deny access to third-party cookies to all other origins.
 * Require consent of child-frames where specific lists (instead of none or all) will be enforced.
 
-
 ## Non-goals
 
 * Override controls to allow access to third-party cookies where access would otherwise be denied.
@@ -32,9 +31,76 @@ Although third-party cookies are not the only storage vector for such cases, the
 ### Website with cookie-related notice
 
 A website has a notice that provides transparency about the third parties it works with for various purposes and it wants to limit the use of third-party cookies by any third-party not listed.
-A website has a notice that asks for permission related to third-party cookies used by that website’s advertisers. If the user denies the use of third-party cookies, the website wants a way to prevent a given origin from accessing or setting them via a browser control. 
+A website has a notice that asks for permission related to third-party cookies used by that website’s advertisers.
+If the user denies the use of third-party cookies, the website wants a way to prevent a given origin from accessing or setting them via a browser control. 
 
 ### Website with sensitive content
 
 A website with sensitive content wants to prevent its users from being tracked by third-party resources it has to fetch/embed to function.
 Third-party cookies are a key tracking vector, and controls related to them would improve user privacy (even if it does not guarantee it).
+
+## Proposed Solution
+
+We propose two new headers, which together allow parent frames to enforce third-party cookie restrictions and child frames to actively consent or passively reject selective enforcement.
+
+### Third-Party-Cookie-Allowlist
+
+This HTTP response header is supported only on navigation, and supports three values:
+
+* The token `*`, the default value if the header is omitted, which represents allowing third-party cookie access where it would otherwise be permitted for all sub-requests and sub-frames.
+* The token `none`, which represents blocking third-party cookie access from all sub-requests and sub-frames.
+  Note that this will not remove access to third-party cookies from the frame itself as cookies would already have been sent in the HTTP request.
+* A list of origins as strings, which will be the only origins that sub-requests or sub-frames could have third-party cookies attached to.
+  As with `*` this does not force access to third-party cookies to those origins, it simply does not deny access that would otherwise have been granted.
+
+The enforced policy on a child frame is the set intersection of the Third-Party-Cookie-Allowlist value (or default value) of the child frame and the enforced policy on its parent (if a parent exists).
+See the examples section for details.
+
+### Accept-Third-Party-Cookie-Allowlist-From
+
+This HTTP response header is supported only on navigation, and supports three values:
+
+* The token `*`, which allows this frame to inherit the policy of any parent frame.
+* An empty value, the default value if the header is omitted, which causes this frame to accept only all (`*`) or nothing () policies from the parent, but not specific lists of origins.
+  If the parent did set a specific list of origins, it will be treated as though they set ().
+  This is the default to prevent selective targeting of origins for third-party cookie blocking in a way the frame would not want to allow.
+* A list of origins as strings, which allow inheritance of the parental policy if the parent origin is on the list and deny inheritance (with behavior the same as the empty value) otherwise.
+
+Note that denied inheritance will not remove access to third-party cookies from the frame itself as cookies would already have been sent in the HTTP request.
+See the examples section for details.
+
+### Example
+
+For each of these examples assume the browser allows third-party cookies by default.
+
+Most of the internet likely won’t adopt these headers, and for them behavior would not change (no child frame consent is needed for policies of all):
+
+![](./images/example_0.png)
+
+A top-frame could prevent all sub-requests and sub-frames from using cookies by setting a `none` allowlist (no child frame consent is needed for policies of nothing):
+
+![](./images/example_1.png)
+
+A top-frame could set a selective policy, but the child frame would need to accept it:
+
+![](./images/example_2.png)
+
+If the top-frame set a selective policy but the child frame didn’t accept it, then it would be as though the child inherited a policy of accepting no third-party cookies
+
+![](./images/example_3.png)
+
+If the child frame accepted the parent policy, it could further restrict it as desired but cannot expand it:
+
+![](./images/example_4.png)
+
+This pattern holds even across multiple levels of nesting:
+
+![](./images/example_5.png)
+
+### Integrations
+
+This header does not block access to [CHIPS](https://privacysandbox.google.com/cookies/chips) (partitioned) cookies or other partitioned storage/communication mechanisms (such as session storage, IndexedDB, or SharedWorkers) in third-party contexts.
+
+Cross-origin frames/requests blocked from third-party cookie access via this header could still restore access via the [Storage Access API](https://developer.mozilla.org/en-US/docs/Web/API/Storage_Access_API) or [Storage Access Headers](https://privacysandbox.google.com/cookies/storage-access-api#sah) (which would behave as it would in any context where third-party cookie access had been denied).
+
+Insecure origins cannot be added to the allowlist.
