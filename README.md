@@ -130,11 +130,29 @@ The ability to set the policy of a document via JavaScript (mid-lifecycle) was c
 You could introduce an API that only respected the first update request, but then you encourage a race to use the API first.
 On the other hand you could provide an API that allowed for overriding or extending the list, but then whatever script wanted to restrict access can no longer be sure it was effective.
 
+## Privacy & Security Considerations
 
+### Parental Policy Information
 
+We require the child frame to consent to the origin of the parent frame for setting specific allowlist policies (aside from all or nothing) to ensure this header can’t be used to selectively target some resources in a way the child frame would not want.
+We could share the exact parental policy in an HTTP request header, but there is a concern that this could expose too much sensitive information as origins in a parental policy are there to permit access across all of its sub-requests and sub-frames, and thus would expose information about other iframes/resources being used.
 
+### User Setting Override
 
+This header should never allow access to third-party cookies where it would otherwise have been denied, it should only deny access where it would otherwise have been granted.
+Browser and origin-specific settings related to third-party cookie blocking must be respected.
 
+### Other Windows
 
+Blocking access to third-party cookies in subresource/navigation fetches, for a given top-level site, does not prevent other tracking methods.
+For example, a third-party iframe could open a popup (which then would have access to first-party cookies) and transmit data which would allow tracking in the third-party context.
+This issue exists even where all third-party cookies are blocked, and requires mitigation via other methods not described here.
 
+### Cross-Origin Attacks
 
+It’s possible this setting could be used to assist in cross-origin attacks by denying information (i.e., third-party cookies) that might otherwise be included in cross-origin subresource requests or sub-frame navigations.
+Ensuring this setting does not block access to [CHIPS](https://privacysandbox.google.com/cookies/chips) should mitigate this concern somewhat, but it’s worth noting that the setting does deny some anti-abuse signals which might otherwise be available.
+
+## UX Considerations
+
+In existing browser surfaces concerned with whether third-party cookies are allowed or blocked for a given tab (such as developer tools or site settings), third-party cookie access blocking due to this header should be reflected to assist with user understanding and developer debugging.
