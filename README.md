@@ -104,3 +104,37 @@ This header does not block access to [CHIPS](https://privacysandbox.google.com/c
 Cross-origin frames/requests blocked from third-party cookie access via this header could still restore access via the [Storage Access API](https://developer.mozilla.org/en-US/docs/Web/API/Storage_Access_API) or [Storage Access Headers](https://privacysandbox.google.com/cookies/storage-access-api#sah) (which would behave as it would in any context where third-party cookie access had been denied).
 
 Insecure origins cannot be added to the allowlist.
+
+## Alternatives Considered
+
+### Permissions Policy Feature
+
+We considered offering this control as a new feature on the existing [Permissions Policy Header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Permissions_Policy), but unlike other permissions this one does not cascade controls to sub-frames.
+The top-level frame is in full control of access while subframes can just further restrict access.
+We worried that adding it as ‘just another’ permissions policy feature would make it seem as though it was a permission that parent frames could delegate control of to child frames.
+
+### Blocklist
+
+Instead of an allowlist, we could have gone for a blocklist approach, but to be effective that would require a website to already know all origins being fetched from—and part of the reason for this control was the potential lack of transparency into that.
+An allowlist should ensure better intentionality, and hopefully requires fewer entries than a blocklist would have.
+
+### Mid-Lifecycle Changes
+
+The ability to change the policy of a document mid-lifecycle (for example, without requiring a reload of the page) might be requested, and could be implemented, but would make it harder for third parties to understand the environment they are executing in.
+Instead of checking constraints once at initialization, checks would need to be performed each time any operation related to them was performed.
+This will likely compound compatibility issues in a way that fixed restrictions would not (such as whether third-party cookies are or aren’t available).
+
+### JavaScript API
+
+The ability to set the policy of a document via JavaScript (mid-lifecycle) was considered but rejected due to the complexity of accommodating multiple scripts attempting to set the list independently.
+You could introduce an API that only respected the first update request, but then you encourage a race to use the API first.
+On the other hand you could provide an API that allowed for overriding or extending the list, but then whatever script wanted to restrict access can no longer be sure it was effective.
+
+
+
+
+
+
+
+
+
