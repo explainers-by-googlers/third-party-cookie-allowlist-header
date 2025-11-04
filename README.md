@@ -141,7 +141,7 @@ We could share the exact parental policy in an HTTP request header, but there is
 
 ### User Setting Override
 
-This header should never allow access to third-party cookies where it would otherwise have been denied, it should only deny access where it would otherwise have been granted.
+This header should never grant access to third-party cookies where it would otherwise have been denied, it should only deny access where it would otherwise have been granted.
 Browser and origin-specific settings related to third-party cookie blocking must be respected.
 
 ### Other Windows
