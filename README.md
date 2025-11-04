@@ -8,7 +8,7 @@ It has not been approved to ship in Chrome.
 ## Introduction
 
 Today, websites have limited control over third-party origins storing/reading cookies.
-This includes, but not limited to, circumstances where third parties are compromised (such as when an imported script abuses access to perform disallowed actions) or layered (such as, an advertising service that has content served by another party).
+This includes, but is not limited to, circumstances where third parties are compromised (such as when an imported script abuses access to perform disallowed actions) or layered (such as, an advertising service that has content served by another party).
 This may raise trust issues that are not technically verifiable, for example in the case of compliance with local data protection and privacy laws.
 
 In these circumstances, websites may desire controls in limiting third-party origins from storing or reading cookies.
